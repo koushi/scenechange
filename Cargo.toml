@@ -1,0 +1,12 @@
+[package]
+name = "scenechange"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+axum = { version = "0.6", features = ["ws"] }                  # Web framework
+tokio = { version = "1", features = ["full"] } # Async runtime
+tower = "0.4"                 # Middleware
+webrtc = "0.7"                # WebRTC library
+serde = { version = "1.0", features = ["derive"] } # Serialization
+serde_json = "1.0"            # JSON handling

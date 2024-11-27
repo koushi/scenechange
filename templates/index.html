@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynamic Background</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+        iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+    </style>
+</head>
+<body>
+    <iframe id="background-frame" src="/static/background.html"></iframe>
+    <script>
+        const peerConnection = new RTCPeerConnection();
+        const dataChannel = peerConnection.createDataChannel("updates");
+
+        dataChannel.onmessage = (event) => {
+            const message = JSON.parse(event.data);
+            if (message.type === "imageUpdate") {
+                const iframe = document.getElementById('background-frame');
+                iframe.src = `/static/background.html?timestamp=${Date.now()}`;
+            }
+        };
+
+        const signalingSocket = new WebSocket("ws://localhost:3000/ws");
+        signalingSocket.onopen = async () => {
+            const offer = await peerConnection.createOffer();
+            await peerConnection.setLocalDescription(offer);
+            signalingSocket.send(JSON.stringify({
+                sdp: peerConnection.localDescription.sdp,
+                sdp_type: "offer"
+            }));
+        };
+
+        signalingSocket.onmessage = async (event) => {
+            const data = JSON.parse(event.data);
+            if (data.sdp) {
+                await peerConnection.setRemoteDescription(
+                    new RTCSessionDescription({ sdp: data.sdp, type: data.sdp_type })
+                );
+            }
+        };
+    </script>
+</body>
+</html>
